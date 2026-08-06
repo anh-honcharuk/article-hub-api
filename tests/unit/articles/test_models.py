@@ -1,0 +1,96 @@
+import pytest
+
+from articles.models import Article
+from users.models import User
+
+
+@pytest.fixture
+def user():
+    """Create a test user for article tests."""
+    user = User(
+        email="test@example.com",
+        name="Test User",
+    )
+    user.set_password("string123")
+    user.save()
+    return user
+
+
+def test_article_creation(user):
+    """Test article creation and its main fields."""
+    article = Article(
+        title="Test Article",
+        content="Test content",
+        author=user,
+    )
+    article.save()
+
+    assert article.id is not None
+    assert article.title == "Test Article"
+    assert article.content == "Test content"
+    assert article.author == user
+
+
+def test_article_default_values(user):
+    """Test default values for article fields."""
+    article = Article(
+        title="Test Article",
+        content="Test content",
+        author=user,
+    )
+    article.save()
+
+    assert article.tags == []
+    assert article.is_public is True
+
+
+def test_article_with_tags(user):
+    """Test saving article tags."""
+    article = Article(
+        title="Python Article",
+        content="Python content",
+        tags=["python", "django"],
+        author=user,
+    )
+    article.save()
+
+    assert article.tags == ["python", "django"]
+
+
+def test_article_private(user):
+    """Test creating a private article."""
+    article = Article(
+        title="Private Article",
+        content="Private content",
+        author=user,
+        is_public=False,
+    )
+    article.save()
+
+    assert article.is_public is False
+
+
+def test_article_analysis(user):
+    """Test saving article analysis results."""
+    article = Article(
+        title="Test Article",
+        content="Test content",
+        author=user,
+        analysis={
+            "word_count": 2,
+            "unique_tags": 2,
+        },
+    )
+    article.save()
+
+    assert article.analysis["word_count"] == 2
+    assert article.analysis["unique_tags"] == 2
+
+
+def test_article_author_is_required():
+    """Test that an article cannot be validated without an author."""
+    with pytest.raises(Exception):
+        Article(
+            title="Test Article",
+            content="Test content",
+        ).validate()
